@@ -141,6 +141,10 @@ Both readings are internally coherent depending on whether the key means "clamp 
 "enable up to gen N", and the branch whose README claims Gen2 works ships `0x1`.
 **Next step:** boot the same card and kernel three times (no key, `0x1`, `0x2`) and post `LnkSta`
 each time. Cheap and decisive.
+**Answered (partially, one platform class) 2026-09:** A/B run on a Haswell-EP server board with
+keys verified delivered inside the initramfs — **no difference, both train Gen1**. The spelling
+is moot on that platform because the retrain is refused for a timing reason the key does not
+control. See [field data](field-data-aug-sep-2026.md#1-q12--rmpcielinkspeed0x1-vs-0x2-no-difference-neither-is-sufficient).
 
 ### 1.3 Do the 595 / 590 / 580 driver ports boot?
 
@@ -369,6 +373,14 @@ software-override experiment showed the effective mask does not move even from H
 **Next step:** run the eight-register read on a card whose masks differ (an 8 GB-class card), attempt
 re-enable under CPU-RM with GSP disabled, and check whether writes to `0x00820364` survive an FLR.
 **Caveat:** whether "disabled but not defective" silicon is recoverable at all is itself unproven.
+**Answered 2026-09 (gpcprobe fuse dump, both SKUs):** the 8 GB-class card DOES show
+`DISABLE ≠ DEFECTIVE` (FBP 1, 4 disabled-only — 96 GiB theoretical), but revival is doubly
+walled on all 170HX: `FUSE_EN_SW_OVERRIDE (0x820040) = 0` / `FUSE_DIS_SW_OVR = 1` (the
+`CTRL_OPT_*` live-override mechanism is fused off, and the register port is value-gated —
+cross-value writes are dropped, never accepted even transiently), plus the needed FB-Falcon
+boot-time channel retrain has no host-visible path. The 10 GB card's dump had
+`DISABLE == DEFECTIVE` — nothing revive-able there at all. See
+[field data](field-data-aug-sep-2026.md#4-q212--recoverable-fbps-fuse-map-answer-from-gpcprobe-2026-09-23).
 
 ### 2.13 IOMMU and the Gen2 reliability story
 
@@ -380,6 +392,11 @@ grub changes at all.
 in-driver `0008`} on identical software. Plausible but undemonstrated reconciliation:
 `iomem=relaxed` matters only for the userspace `mmap`-based retrain and IOMMU mode only on some
 chipsets.
+**Data point 2026-09 (one Intel rig):** `intel_iommu=on iommu=pt` was held constant across every
+failure AND the eventual success — IOMMU mode was never the discriminator there; the discriminator
+was whether the retrain fired inside the ~0.4 s boot window (see
+[field data](field-data-aug-sep-2026.md#2-q213q214--the-gen2-failure-class-this-rig-hit-a-04-s-boot-window)).
+This supports the "IOMMU only matters on some chipsets" arm of the reconciliation.
 
 ### 2.14 Reboot persistence of Gen2
 
@@ -387,6 +404,13 @@ chipsets.
 reproducibly, with re-running `install.sh` restoring it each time.
 **Working hypothesis:** persistence depends on whether the *patched* module is actually loaded at
 boot rather than only live-patched by the installer.
+**Answered 2026-09 (root cause found):** the "2,2 after install, 1,1 after reboot" signature is a
+**boot-window timing miss** — the Gen2 advertisement window opens when the booter writes land
+(~T+6 s on an initramfs-loaded module) and closes ~0.4 s later, before any systemd userspace
+retrain can fire. The installer's own retrain lands inside the window; the boot-time one doesn't.
+Persistence requires an initramfs-stage watcher catching the window every boot. Verified: watcher
+installed → LnkSta `0x1042` both cards after warm reboot. See
+[field data](field-data-aug-sep-2026.md#2-q213q214--the-gen2-failure-class-this-rig-hit-a-04-s-boot-window).
 **Next step:** on a failing system, check `modinfo` and `dmesg` after reboot for the patched module
 and for `SEC2_DEBUG: PCIe` lines before blaming the retrain.
 
