@@ -615,8 +615,10 @@ before any graphics-engine init.
 - `FBHUB_HSHUB_SYS_CFG` (`SYSMEM_HSHUB_CONNECTION_CFG`, PCIe routing, init `0x3` = BOTH) is `3`
   on every GA100 and `1` on every GA10x. Architecture split, not a restriction.
 - The two MIG partition registers read **zero on both 170HX units** while every A100 and the
-  Drive carry values. Nothing in the corpus tests MIG on this card, so treat this as an
-  observation about probe-time state rather than proof that MIG is unavailable.
+  Drive carry values. These memory-partition values concern the memory side of MIG and do not
+  determine the compute-engine enumeration; the observed one-profile limit is separately
+  consistent with an inferred syspipe-disable mask (`0x008203a4 = 0xfe`) and a device-info table
+  that lists only GR0. See [MIG: root cause](../frontier/mig.md#root-cause-evidence-for-a-hardware-enumeration-limit-syspipe-fuse-attribution-provisional).
 
 ---
 

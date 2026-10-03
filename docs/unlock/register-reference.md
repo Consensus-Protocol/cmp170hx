@@ -548,6 +548,7 @@ Per-card, not per-SKU. Every surveyed 170HX lands at 70 SM regardless of which G
 | `0x0082036c` | `OPT_FBIO_DISABLE` | mirrors `0x00820368` | |
 | `0x008202c4` | `OPT_ROP_L2_DISABLE` | mirrors `0x00820368` | |
 | `0x00820398` | `OPT_SPARE_FS` | `0x00000000` | |
+| `0x008203a4` | `OPT_SYS_PIPE_DISABLE` (inferred) | `0xfe` on both 170HX, `0x0` on GA106 | inferred syspipe mask; if the mapping is correct, bits 1–7 disable syspipes 1–7; host BAR0 writes do not latch; matches the single `1g.64gb` MIG profile |
 | `0x008205c4` | `OPT_GPC_DEFECTIVE` | `0x00000000` on several cards whose DISABLE had three bits set; `0x81` on one 10 GB card | "disabled" and "defective" are separate masks: some disabled GPCs are physically good silicon |
 | `0x008205cc` | `OPT_FBP_DEFECTIVE` | `0x00000840` (10 GB card) | |
 | `0x008205d0` / `0x008205d4` / `0x008205e8` | `OPT_FBPA_DEFECTIVE` / `FBIO_DEFECTIVE` / `ROP_L2_DEFECTIVE` | `0x00c03000` each | |
@@ -561,6 +562,7 @@ Per-card, not per-SKU. Every surveyed 170HX lands at 70 SM regardless of which G
 | `0x00820c1c` | `STATUS_OPT_GPC` | always mirrors `0x00820350` | |
 | `0x00820c38 + i*4` | `FUSE_STATUS_OPT_TPC_GPC(i)` | GPC0/3/5 = `0xff`, others = `0x01` on one card | |
 | `0x00820d38` | `STATUS_FBP` | `0x00000180` on one unit | |
+| `0x00820e30` | syspipe mask, possible applied copy (inferred) | `0xfe` on 170HX, `0xbadf5040` on GA106 | same value as `0x008203a4`; host BAR0 write-probe `0xfc` did not latch — not a writable shadow |
 
 ### Topology scalars (`0x0002xxxx`)
 

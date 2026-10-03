@@ -80,6 +80,11 @@ Shipped, stable, and the only part of the unlock that survives a Function Level 
 > outputs and reported persistent, but it is not in the shipping tree and only the `1g.64gb`
 > profile exists. INT8/IMMA throughput remains gated after the unlock for reasons nobody has
 > explained.
+>
+> Second independent reproduction (610.43.03, 2026-09-13): enable, the sole `1g.64gb` instance,
+> and reboot-survival confirmed. An A/B driver build shows `mig-unlock.patch` raises FP32 SGEMM
+> under MIG ~5.5× (1.85 → 10.2 TFLOP/s) — FP32 throughput only; the INT8/IMMA gate is unaffected.
+> Full report: [MIG](mig.md).
 
 ### Memory geometry
 
@@ -268,7 +273,7 @@ disagree about which versions are even claimed, which is an acknowledged interna
 
 | Capability | Status | Notes |
 |---|---|---|
-| MIG | **Experimental** | Enable via bit 0 of `0x820840` demonstrated and reported persistent; only the `1g.64gb` profile exists, `-cgi 9,3g.20gb -C` returns `Invalid Argument`. Not upstreamed. |
+| MIG | **Experimental** | Enable via bit 0 of `0x820840` demonstrated and reported persistent; only the `1g.64gb` profile exists, `-cgi 9,3g.20gb -C` returns `Invalid Argument`. The device-info table enumerates only GR0; an inferred syspipe mask reads `0xfe` and ignores host writes ([MIG](mig.md)). Not upstreamed. |
 | Resizable BAR | **Not attempted** | The card advertises a Physical Resizable BAR capability, reportedly limited to 64 MiB. Master deliberately clamps the BAR0/PRAMIN window to the 8 GiB stock offset for both device IDs. |
 | SR-IOV | **Not attempted** | No SR-IOV extended capability appears in the archived `lspci -vvv` capture, which is suggestive but was captured for other purposes. |
 | NVENC | **No known lever** | Probably a silicon absence: GA100 generally lacks NVENC hardware. NVDEC is present. |

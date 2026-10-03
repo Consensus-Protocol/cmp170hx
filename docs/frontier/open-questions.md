@@ -159,16 +159,30 @@ the existing installed base and compare.
 ### 1.5 Is MIG usable on an unlocked card?
 
 The MIG-relevant registers are populated and readable (`FBHUB_MEM_PART_BOT 0x00100b88`,
-`MID 0x00100b8c`, `BOUNDARY_CFG0 0x00100b90`, `SYSMEM_HSHUB_CONNECTION_CFG 0x00100b98`) and the
-fuse survey shows the 170HX has *no* MIG partitioning programmed rather than MIG fused off.
+`MID 0x00100b8c`, `BOUNDARY_CFG0 0x00100b90`, `SYSMEM_HSHUB_CONNECTION_CFG 0x00100b98`). These FBHUB
+memory-partition registers describe the memory side and do not settle the compute-side profile
+limit. New evidence on 610.57.04 places that limit at device enumeration: the hardware device-info
+table lists only GR0, and an inferred syspipe-disable mask (`0x008203a4`) reads `0xfe` and does not
+take host writes. The register-to-engine mapping is not yet validated against an A100. See
+[MIG: root cause](mig.md#root-cause-evidence-for-a-hardware-enumeration-limit-syspipe-fuse-attribution-provisional).
 Separately, a MIG enable via bit 0 of `0x820840` was demonstrated and reported persistent.
 **Already reported once:** on an unlocked card `nvidia-smi mig -lgip` lists exactly one profile,
 `MIG 1g.64gb` (63.00 GiB, 70 SMs), and `nvidia-smi mig -cgi 0` creates it, while a standard A100
 profile (`-cgi 9,3g.20gb -C`) returns `Invalid Argument`. So MIG turns on but cannot partition the
 card as shipped.
-**Next step:** repeat on a second card, and find where RM builds the GA100 GPU-instance profile
-list so more profiles can be added. If the enable holds, open the pull request; the maintainer
-offered to merge one.
+
+**Reproduced independently (2026-09-13, driver 610.43.03, one CMP 170HX at 64 GB):** `-mig 1`
+enables and survives a reboot; `nvidia-smi mig -lgip` lists exactly `MIG 1g.64gb`; `-cgi 1g.64gb -C`
+creates the GPU and compute instance; every standard A100 profile (by name and by ID) still returns
+`Invalid Argument`. An A/B driver build isolates the patch's effect: on the base unlock an FP32
+cuBLAS SGEMM (8192³) on the instance runs at 1.85 TFLOP/s, and with `mig-unlock.patch` at
+10.2 TFLOP/s — a ~5.5× throughput gain consistent with widened compute-instance capacity. This
+measures FP32 throughput only: it does **not** establish an active-SM count (`-lgip` reports 70 SM
+in both builds) or address the separate INT8/IMMA gate. Full commands, outputs and A/B method:
+[MIG](mig.md).
+**Next step:** the second-card reproduction is now done (above); what remains is to find where RM
+builds the GA100 GPU-instance profile list so more profiles can be added. The MIG enable holds
+across reboots on 610.43.03, and the maintainer offered to merge that patch.
 
 ### 1.6 Does P2P do anything on a 170HX-only host?
 
