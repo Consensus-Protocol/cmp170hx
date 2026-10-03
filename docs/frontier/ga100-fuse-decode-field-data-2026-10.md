@@ -4,7 +4,8 @@ Single-rig field report: ASUS Z10PE-D8 WS (C612/Haswell-EP), two cards — `10de
 (8 GB Hynix, 64 GB unlocked) at 81:00.0 and `10de:2082` (10 GB Samsung, 40 GB unlocked) at
 82:00.0. cmpunlocker master `fe53796`, nvidia-open 610.43.03. Dumped via the fuse
 controller command interface (CMD_READ only; RIR macro via `DEBUGCTRL 0x820060` RWL=1,
-FUSEADDR mod 8, DEBUGCTRL cleared + readback-verified after). Raw JSON available on request.
+FUSEADDR mod 8, DEBUGCTRL cleared + readback-verified after). Raw dumps + decoded instruction maps
+published alongside this page in `artifacts/`.
 
 ## 1. FF instruction layout — decoded and anchored
 
